@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CricPulse Quantum | 2026 Squad Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&family=Syncopate:wght@700&display=swap');
+        
+        :root { 
+            --neon-cyan: #00f2ff; 
+            --neon-purple: #bc13fe; 
+            --neon-gold: #ffd700; 
+            --danger: #ff004c; 
+            --field-green: #0a2d1d;
+            --bg: #020406; 
+        }
+
+        body { 
+            background-color: var(--bg); 
+            color: #e2e8f0; 
+            font-family: 'Rajdhani', sans-serif; 
+            overflow: hidden; 
+            height: 100vh; 
+            margin: 0;
+            user-select: none;
+        }
+
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        .syncopate { font-family: 'Syncopate', sans-serif; }
+
+        .scanlines { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.05) 50%);
+            background-size: 100% 4px; z-index: 5000; pointer-events: none; opacity: 0.2;
+        }
+
+        .quantum-panel { 
+            background: rgba(13, 17, 23, 0.85); 
+            backdrop-filter: blur(15px); 
+            border: 1px solid rgba(0, 242, 255, 0.15);
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.9);
+        }
+
+        .field-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, #104d33 0%, #05120b 100%);
+            border-radius: 50%;
+            border: 4px double rgba(0, 242, 255, 0.2);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pitch {
+            position: absolute;
+            width: 25px; height: 140px;
+            background: linear-gradient(to bottom, #96714d, #b38d6d, #96714d);
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            border-radius: 2px;
+        }
+
+        .stumps {
+            position: absolute;
+            width: 10px; height: 4px;
+            background: white;
+            box-shadow: 0 0 10px white;
+        }
+
+        .hit-line {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform-origin: 0 0;
+            height: 3px;
+            z-index: 10;
+            pointer-events: none;
+            border-radius: 10px;
+            box-shadow: 0 0 15px currentColor;
+        }
+
+        @keyframes stroke-anim {
+            0% { width: 0; opacity: 1; filter: brightness(2); }
+            70% { opacity: 0.8; }
+            100% { width: 180px; opacity: 0; }
+        }
+
+        .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 2.5px; color: #94a3b8; font-weight: 700; }
+        .stat-value { font-family: 'Orbitron', sans-serif; font-weight: 900; }
+
+        .marquee-container { overflow: hidden; white-space: nowrap; }
+        .marquee-content { display: inline-block; animation: marquee 40s linear infinite; }
+        @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+
+        .ball-dot { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s; }
+        .ball-4 { background: #ffd700; color: black; box-shadow: 0 0 15px #ffd700; border: none; }
+        .ball-6 { background: #bc13fe; color: white; box-shadow: 0 0 15px #bc13fe; border: none; }
+        .ball-w { background: #ff004c; color: white; box-shadow: 0 0 15px #ff004c; border: none; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 10px; }
+    </style>
+</head>
+<body class="p-4 flex flex-col gap-4">
+    <div class="scanlines"></div>
+
+    <!-- STARTUP SPLASH -->
+    <div id="setup-screen" class="fixed inset-0 z-[9999] bg-black flex items-center justify-center p-6 overflow-hidden">
+        <div class="absolute inset-0 opacity-30">
+            <div class="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+        </div>
+        
+        <div class="quantum-panel p-8 rounded-[30px] max-w-4xl w-full relative border-t-4 border-cyan-500">
+            <div class="flex justify-between items-start mb-8">
+                <div>
+                    <h1 class="text-6xl font-black italic tracking-tighter orbitron text-white leading-none">CRICPULSE<span class="text-cyan-500">.QX</span></h1>
+                    <p class="stat-label mt-2 text-[10px]">IPL 2026 UPDATED SQUADS • ULTRA ENGINE V4.2</p>
+                </div>
+                <div class="flex gap-2">
+                    <div id="weather-tag" class="text-[10px] font-bold text-orange-500 px-3 py-1 bg-orange-500/10 border border-orange-500/30 rounded-full">CALCULATING WEATHER...</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-6 mb-8">
+                <div class="space-y-3">
+                    <label class="stat-label">Batting Side</label>
+                    <select id="select-bat" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl orbitron text-xs focus:border-cyan-500 outline-none text-white"></select>
+                </div>
+                <div class="space-y-3">
+                    <label class="stat-label">Bowling Side</label>
+                    <select id="select-bowl" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl orbitron text-xs focus:border-cyan-500 outline-none text-white"></select>
+                </div>
+                <div class="space-y-3">
+                    <label class="stat-label">Match Config</label>
+                    <select id="select-overs" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl orbitron text-xs focus:border-cyan-500 outline-none text-white">
+                        <option value="12">BLITZ T2 (2 OVERS)</option>
+                        <option value="30">STRIKE T5 (5 OVERS)</option>
+                        <option value="60" selected>PREMIER T10 (10 OVERS)</option>
+                        <option value="120">ELITE T20 (20 OVERS)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="toss-choice-ui" class="hidden mb-8 grid grid-cols-2 gap-4">
+                <button onclick="chooseTossAction('BAT')" class="py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl orbitron text-sm text-cyan-500 font-bold uppercase transition-all">Choose Batting</button>
+                <button onclick="chooseTossAction('BOWL')" class="py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl orbitron text-sm text-yellow-500 font-bold uppercase transition-all">Choose Bowling</button>
+            </div>
+
+            <div id="toss-result" class="mb-6 text-center orbitron text-cyan-400 text-sm font-bold hidden uppercase tracking-widest">TOSS: WINNING...</div>
+
+            <button onclick="performToss()" id="btn-start" class="group w-full py-6 bg-cyan-500 hover:bg-cyan-400 text-black font-black orbitron uppercase tracking-[0.2em] rounded-2xl transition-all flex items-center justify-center gap-4">
+                <span>Engage Match Logic</span>
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN UI -->
+    <div id="main-ui" class="hidden flex flex-col gap-4 h-full relative">
+        <!-- HUD ELEMENTS SAME AS PREVIOUS -->
+        <div class="grid grid-cols-12 gap-4 h-16">
+            <div class="col-span-3 quantum-panel rounded-2xl flex items-center px-6 border-l-4 border-cyan-500">
+                <div class="flex flex-col">
+                    <span class="stat-label leading-none">LIVE FEED</span>
+                    <span id="match-status-tag" class="orbitron text-cyan-500 text-sm font-bold mt-1 animate-pulse uppercase">TRANSMISSION ACTIVE</span>
+                </div>
+            </div>
+            <div class="col-span-6 quantum-panel rounded-2xl flex items-center justify-around">
+                <div class="text-center">
+                    <div class="stat-label">CRR</div>
+                    <div id="hud-crr" class="stat-value text-xl italic text-white">0.00</div>
+                </div>
+                <div class="h-8 w-[1px] bg-white/10"></div>
+                <div id="hud-rrr-box" class="text-center opacity-30">
+                    <div class="stat-label">RRR</div>
+                    <div id="hud-rrr" class="stat-value text-xl italic text-white">0.00</div>
+                </div>
+                <div class="h-8 w-[1px] bg-white/10"></div>
+                <div id="powerplay-indicator" class="flex items-center gap-2 px-3 py-1 bg-red-500/10 border border-red-500/30 rounded-full">
+                    <div class="w-2 h-2 bg-red-500 rounded-full animate-ping"></div>
+                    <span class="text-[9px] font-black orbitron text-red-500 uppercase">Powerplay 1</span>
+                </div>
+            </div>
+            <div class="col-span-3 quantum-panel rounded-2xl flex items-center justify-end px-6 gap-4">
+                <div class="text-right">
+                    <div id="weather-display" class="stat-label text-[9px] text-orange-400 italic">Clear Skies</div>
+                    <div id="clock" class="orbitron text-xs text-white/50">00:00:00</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN STAGE -->
+        <div class="flex-grow grid grid-cols-12 gap-4 overflow-hidden">
+            <div class="col-span-3 flex flex-col gap-4 overflow-hidden">
+                <div class="quantum-panel p-6 rounded-[25px]">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="stat-label">Win Probability</span>
+                        <span id="prob-val" class="orbitron text-2xl font-black italic">50%</span>
+                    </div>
+                    <div class="flex h-3 w-full bg-white/5 rounded-full overflow-hidden p-0.5 border border-white/10">
+                        <div id="prob-bar-a" class="h-full bg-cyan-500 transition-all duration-1000" style="width: 50%"></div>
+                        <div id="prob-bar-b" class="h-full bg-yellow-500 transition-all duration-1000" style="width: 50%"></div>
+                    </div>
+                </div>
+                <div class="quantum-panel p-6 rounded-[25px] flex-grow flex flex-col overflow-hidden">
+                    <h3 class="stat-label text-purple-500 mb-4 flex items-center gap-2">
+                        <span class="w-1 h-4 bg-purple-500"></span> Neural Feed
+                    </h3>
+                    <div id="neural-log" class="flex-grow overflow-y-auto space-y-3 pr-2 custom-scrollbar text-xs"></div>
+                </div>
+            </div>
+
+            <div class="col-span-6 flex flex-col gap-4">
+                <div class="flex-grow quantum-panel rounded-[35px] relative overflow-hidden flex items-center justify-center bg-[#010203]">
+                    <div id="flash-overlay" class="absolute inset-0 z-40 flex items-center justify-center opacity-0 transition-opacity duration-300 pointer-events-none">
+                        <div id="flash-text" class="text-8xl font-black italic syncopate"></div>
+                    </div>
+                    <div class="field-container scale-110">
+                        <div class="pitch"></div>
+                        <div class="stumps top-[18%]"></div>
+                        <div class="stumps bottom-[18%]"></div>
+                        <div id="wheel-lines" class="absolute inset-0"></div>
+                    </div>
+                    <div class="absolute bottom-6 left-6 p-4 bg-black/60 backdrop-blur-xl rounded-2xl border border-white/10">
+                        <div class="stat-label text-[8px] mb-1">Impact Velocity</div>
+                        <div class="flex items-end gap-1">
+                            <span id="speedo" class="text-3xl font-black orbitron italic text-cyan-400">0.0</span>
+                            <span class="text-[9px] font-bold opacity-30 pb-1">KM/H</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="h-24 quantum-panel rounded-[25px] p-4 flex items-center gap-6 border-b-4 border-yellow-500">
+                    <div class="flex flex-col border-r border-white/10 pr-6">
+                        <span class="stat-label text-[8px]">This Over</span>
+                        <span class="orbitron text-2xl font-black text-yellow-500" id="over-sum">0</span>
+                    </div>
+                    <div id="over-balls" class="flex gap-2 overflow-x-auto items-center"></div>
+                </div>
+            </div>
+
+            <div class="col-span-3 flex flex-col gap-4 overflow-hidden">
+                <div class="quantum-panel p-6 rounded-[25px] border-r-4 border-yellow-500">
+                    <h3 class="stat-label text-yellow-500 mb-4">Batting</h3>
+                    <div id="batting-unit" class="space-y-4"></div>
+                </div>
+                <div class="quantum-panel p-6 rounded-[25px] flex-grow flex flex-col">
+                    <h3 class="stat-label text-cyan-500 mb-4">Bowling</h3>
+                    <div id="bowling-unit" class="space-y-4"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER SCOREBOARD -->
+        <footer class="h-32 grid grid-cols-12 quantum-panel rounded-[30px] overflow-hidden border-t border-cyan-500/30">
+            <div class="col-span-2 bg-gradient-to-br from-cyan-950/40 via-black to-black flex flex-col justify-center items-center">
+                <div id="team-slug" class="text-5xl font-black italic orbitron tracking-tighter text-white">IND</div>
+                <div class="stat-label text-[8px] mt-1">Inn <span id="inn-num" class="text-cyan-500">1</span></div>
+            </div>
+            <div class="col-span-4 flex items-center px-8 gap-8">
+                <div class="text-7xl font-black italic orbitron tracking-tighter leading-none flex items-baseline">
+                    <span id="score-runs">0</span>
+                    <span class="text-3xl mx-2 opacity-20 text-white">/</span>
+                    <span id="score-wickets" class="text-5xl text-red-500">0</span>
+                </div>
+                <div class="h-16 w-[1px] bg-white/10"></div>
+                <div class="flex flex-col">
+                    <div class="text-3xl font-black italic orbitron tracking-tighter text-white" id="overs-count">0.0</div>
+                    <div class="stat-label text-[8px]">Integrity</div>
+                </div>
+            </div>
+            <div class="col-span-6 flex flex-col">
+                <div class="flex-grow flex items-center justify-between px-10">
+                    <div class="text-center">
+                        <div class="stat-label">Boundaries</div>
+                        <div class="text-2xl font-black orbitron italic text-white">
+                            <span id="fours" class="text-yellow-400">0</span>
+                            <span class="mx-2 opacity-20">|</span>
+                            <span id="sixes" class="text-purple-400">0</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div id="match-desc" class="text-sm font-black text-cyan-500 italic uppercase tracking-widest">Awaiting Toss...</div>
+                    </div>
+                </div>
+                <div class="h-8 bg-cyan-950/20 border-t border-white/5 flex items-center px-6 overflow-hidden marquee-container">
+                    <div id="ticker" class="marquee-content text-[9px] font-bold uppercase tracking-[0.4em] text-cyan-400/60 italic">
+                        IPL 2026 QUANTUM STREAM • MEGA AUCTION UPDATES LOADED • AI-MODELING ENGAGED • ENJOY THE MATCH
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- SUMMARY -->
+    <div id="summary-overlay" class="fixed inset-0 z-[10000] bg-black/98 hidden backdrop-blur-3xl p-12 overflow-y-auto">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex justify-between items-end mb-8 border-b-2 border-cyan-500 pb-6">
+                <div>
+                    <h1 class="text-6xl font-black italic orbitron text-white uppercase tracking-tighter">POST-MATCH</h1>
+                    <div id="final-verdict" class="text-3xl font-bold mt-2 uppercase italic text-yellow-500">TEAM WON</div>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-8">
+                <div class="quantum-panel p-6 rounded-[30px]">
+                    <h3 class="stat-label text-lg text-yellow-500 mb-6">Batting Stats</h3>
+                    <div id="final-bat-list" class="space-y-2"></div>
+                </div>
+                <div class="quantum-panel p-6 rounded-[30px]">
+                    <h3 class="stat-label text-lg text-cyan-500 mb-6">Bowling Stats</h3>
+                    <div id="final-bowl-list" class="space-y-2"></div>
+                </div>
+            </div>
+            <button onclick="location.reload()" class="mt-12 px-12 py-4 bg-cyan-500 text-black font-black orbitron rounded-xl hover:scale-105 transition-all text-sm uppercase tracking-widest">Start New Session</button>
+        </div>
+    </div>
+
+    <script>
+        // Updated Squads based on User Input
+        const SQUADS = {
+            "Chennai Super Kings": ["S. Samson (wk)", "A. Mhatre", "R. Gaikwad (c)", "K. Sharma", "S. Dube", "D. Brevis", "P. Veer", "MS Dhoni", "Noor Ahmad", "N. Ellis", "M. Henry"],
+            "Mumbai Indians": ["R. Sharma", "R. Rickelton (wk)", "S. Yadav", "H. Pandya (c)", "T. Varma", "N. Dhir", "S. Rutherford", "M. Santner", "J. Bumrah", "T. Boult", "M. Markande"],
+            "Kolkata Knight Riders": ["F. Allen (wk)", "A. Rahane (c)", "A. Raghuvanshi", "C. Green", "R. Singh", "R. Powell", "Ramandeep Singh", "S. Narine", "V. Chakravarthy", "V. Arora", "A. Deep"],
+            "Royal Challengers Bengaluru": ["V. Kohli", "P. Salt", "R. Patidar (c)", "D. Padikkal", "J. Sharma (wk)", "T. David", "K. Pandya", "R. Shepherd", "B. Kumar", "J. Hazlewood", "Y. Dayal"],
+            "Sunrisers Hyderabad": ["A. Sharma", "T. Head", "I. Kishan (wk)", "N. Reddy", "H. Klaasen", "L. Livingstone", "A. Verma", "H. Dubey", "P. Cummins (c)", "H. Patel", "J. Unadkat"],
+            "Lucknow Super Giants": ["A. Markram", "M. Marsh", "R. Pant (c)", "N. Pooran (wk)", "A. Badoni", "A. Samad", "S. Ahmed", "W. Hasaranga", "M. Shami", "M. Yadav", "M. Khan"],
+            "Rajasthan Royals": ["Y. Jaiswal", "V. Suryavanshi", "D. Jurel (wk)", "R. Parag", "S. Hetmyer", "R. Jadeja (c)", "S. Curran", "N. Burger", "J. Archer", "R. Bishnoi", "T. Deshpande"],
+            "Delhi Capitals": ["KL Rahul", "P. Nissanka", "T. Stubbs", "N. Rana", "A. Porel (wk)", "A. Patel (c)", "S. Rizvi", "M. Starc", "K. Yadav", "T. Natarajan", "M. Kumar"],
+            "Gujarat Titans": ["S. Gill (c)", "J. Buttler (wk)", "S. Sudharsan", "T. Banton", "S. Khan", "R. Tewatia", "Rashid Khan", "J. Holder", "M. Siraj", "S. Kishore", "Noor Ahmad"],
+            "Punjab Kings": ["P. Arya", "P. Singh", "S. Iyer (c)", "N. Wadhera", "M. Stoinis", "S. Singh (wk)", "M. Jansen", "H. Brar", "Y. Chahal", "L. Ferguson", "A. Singh"]
+        };
+
+        const WEATHER_TYPES = [
+            { name: "Clear Skies", batMod: 1.0, bowlMod: 1.0, icon: "☀️" },
+            { name: "Overcast", batMod: 0.85, bowlMod: 1.2, icon: "☁️" },
+            { name: "Humid/Dew", batMod: 1.15, bowlMod: 0.9, icon: "💧" },
+            { name: "Extreme Heat", batMod: 0.9, bowlMod: 0.85, icon: "🔥" }
+        ];
+
+        let db = {
+            batTeam: "", bowlTeam: "", maxBalls: 60, inn: 1, score: 0, wickets: 0, balls: 0, 
+            target: null, strikerIdx: 0, nonStrikerIdx: 1, bowlerIdx: 10, batsmen: [], bowlers: [],
+            winProb: 50, fours: 0, sixes: 0, thisOver: [], running: false, speed: 0,
+            weather: WEATHER_TYPES[0], tossWinner: "", tossChoice: "",
+            summaryData: { inn1: { score: 0, wickets: 0, bat: [], bowl: [] }, inn2: { score: 0, wickets: 0, bat: [], bowl: [] } }
+        };
+
+        window.onload = () => {
+            const batSel = document.getElementById('select-bat');
+            const bowlSel = document.getElementById('select-bowl');
+            Object.keys(SQUADS).forEach(t => {
+                batSel.add(new Option(t, t));
+                bowlSel.add(new Option(t, t));
+            });
+            batSel.value = "Chennai Super Kings"; bowlSel.value = "Mumbai Indians";
+            
+            db.weather = WEATHER_TYPES[Math.floor(Math.random() * WEATHER_TYPES.length)];
+            document.getElementById('weather-tag').innerText = `ATMOSPHERE: ${db.weather.name} ${db.weather.icon}`;
+            document.getElementById('weather-display').innerText = `${db.weather.name} ${db.weather.icon}`;
+        };
+
+        async function performToss() {
+            const tossText = document.getElementById('toss-result');
+            const startBtn = document.getElementById('btn-start');
+            startBtn.disabled = true;
+            startBtn.classList.add('opacity-50');
+            
+            tossText.classList.remove('hidden');
+            tossText.innerText = "TOSSING QUANTUM COIN...";
+            await sleep(1500);
+            
+            const teams = [document.getElementById('select-bat').value, document.getElementById('select-bowl').value];
+            db.tossWinner = teams[Math.floor(Math.random() * 2)];
+            
+            tossText.innerText = `${db.tossWinner.toUpperCase()} WON THE TOSS`;
+            document.getElementById('toss-choice-ui').classList.remove('hidden');
+        }
+
+        function chooseTossAction(action) {
+            db.tossChoice = action;
+            const batInp = document.getElementById('select-bat').value;
+            const bowlInp = document.getElementById('select-bowl').value;
+
+            if (db.tossWinner === batInp) {
+                if (action === 'BOWL') swapTeams();
+            } else {
+                if (action === 'BAT') swapTeams();
+            }
+            
+            document.getElementById('toss-choice-ui').classList.add('hidden');
+            startMatch();
+        }
+
+        function swapTeams() {
+            const b = document.getElementById('select-bat').value;
+            document.getElementById('select-bat').value = document.getElementById('select-bowl').value;
+            document.getElementById('select-bowl').value = b;
+        }
+
+        function startMatch() {
+            db.batTeam = document.getElementById('select-bat').value;
+            db.bowlTeam = document.getElementById('select-bowl').value;
+            db.maxBalls = parseInt(document.getElementById('select-overs').value);
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('main-ui').classList.remove('hidden');
+            initInnings();
+            db.running = true;
+            matchLoop();
+        }
+
+        function initInnings() {
+            db.batsmen = SQUADS[db.batTeam].map((name, idx) => ({
+                name, runs: 0, balls: 0, "4s": 0, "6s": 0, out: false, 
+                skill: idx < 5 ? 0.95 : (idx < 8 ? 0.6 : 0.25),
+                milestone: false 
+            }));
+            db.bowlers = SQUADS[db.bowlTeam].map(name => ({
+                name, wickets: 0, runsConceded: 0, ballsBowled: 0, dots: 0
+            }));
+            
+            db.score = 0; db.wickets = 0; db.balls = 0;
+            db.strikerIdx = 0; db.nonStrikerIdx = 1; db.bowlerIdx = 10; // Start with last player as bowler
+            db.fours = 0; db.sixes = 0; db.thisOver = [];
+            
+            document.getElementById('team-slug').innerText = db.batTeam.substring(0,3).toUpperCase();
+            document.getElementById('inn-num').innerText = db.inn;
+            updatePowerplayUI();
+            addNeuralLog(`Innings ${db.inn}: ${db.batTeam} vs ${db.bowlTeam}`, 'cyan');
+        }
+
+        async function matchLoop() {
+            while(db.running) {
+                if (db.wickets >= 10 || db.balls >= db.maxBalls || (db.inn === 2 && db.score >= db.target)) {
+                    await handleInningsEnd();
+                    continue; 
+                }
+                await simulateBall();
+                updateUI();
+                await sleep(1000); 
+            }
+        }
+
+        function updatePowerplayUI() {
+            const pp = document.getElementById('powerplay-indicator');
+            const totalOvers = db.maxBalls / 6;
+            const currentOver = Math.floor(db.balls/6);
+            const ppLimit = totalOvers * 0.3; 
+
+            if (currentOver < ppLimit) {
+                pp.classList.remove('hidden');
+                pp.querySelector('span').innerText = `Powerplay 1`;
+            } else {
+                pp.classList.add('hidden');
+            }
+        }
+
+        async function simulateBall() {
+            const s = db.batsmen[db.strikerIdx];
+            const skill = s.skill * db.weather.batMod;
+            
+            let weights = [30, 35, 8, 2, 12, 6, 6, 1]; 
+            if (skill < 0.4) weights = [60, 15, 2, 1, 2, 1, 15, 4]; 
+            if (skill > 0.8) weights = [15, 40, 10, 3, 18, 12, 1, 1]; 
+
+            weights[6] *= db.weather.bowlMod;
+
+            const outcomes = [0, 1, 2, 3, 4, 6, 'W', 'Ex'];
+            let total = weights.reduce((a,b) => a+b, 0);
+            let rng = Math.random() * total;
+            let result;
+            for(let i=0; i<outcomes.length; i++) {
+                if(rng < weights[i]) { result = outcomes[i]; break; }
+                rng -= weights[i];
+            }
+            
+            if (result === 'Ex') result = Math.random() > 0.5 ? 'Wd' : 'Nb';
+            processResult(result);
+        }
+
+        function processResult(res) {
+            let s = db.batsmen[db.strikerIdx];
+            let bw = db.bowlers[db.bowlerIdx];
+            db.speed = (130 + Math.random() * 25).toFixed(1);
+
+            if (res === 'Wd' || res === 'Nb') {
+                db.score++; bw.runsConceded++;
+                db.thisOver.push(res);
+                return;
+            }
+
+            db.balls++; s.balls++; bw.ballsBowled++;
+            db.thisOver.push(res);
+
+            if (res === 'W') {
+                db.wickets++; bw.wickets++; s.out = true;
+                flashEffect('WICKET');
+                addNeuralLog(`OUT! ${s.name} out. Bowled by ${bw.name}`, 'red');
+                if (db.wickets < 10) {
+                    db.strikerIdx = Math.max(db.strikerIdx, db.nonStrikerIdx) + 1;
+                }
+            } else {
+                db.score += res; s.runs += res; bw.runsConceded += res;
+                if (res === 4) { db.fours++; s["4s"]++; flashEffect('FOUR'); drawHitLine(4); }
+                if (res === 6) { db.sixes++; s["6s"]++; flashEffect('SIX'); drawHitLine(6); }
+                
+                if (s.runs >= 50 && !s.milestone) {
+                    s.milestone = true;
+                    addNeuralLog(`Pachaas! ${s.name} reaches 50*`, 'cyan');
+                    flashEffect('FIFTY!');
+                }
+
+                if (res % 2 !== 0) swap();
+            }
+
+            if (db.balls % 6 === 0 && res !== 'Wd' && res !== 'Nb') {
+                swap();
+                // Rotate through bowlers 8-11 (last 4 specialized bowlers)
+                db.bowlerIdx = 7 + Math.floor(Math.random() * 4); 
+                db.thisOver = [];
+                updatePowerplayUI();
+            }
+        }
+
+        function swap() { [db.strikerIdx, db.nonStrikerIdx] = [db.nonStrikerIdx, db.strikerIdx]; }
+
+        function updateUI() {
+            document.getElementById('score-runs').innerText = db.score;
+            document.getElementById('score-wickets').innerText = db.wickets;
+            document.getElementById('overs-count').innerText = `${Math.floor(db.balls/6)}.${db.balls%6}`;
+            document.getElementById('hud-crr').innerText = (db.score / (db.balls/6 || 1)).toFixed(2);
+            document.getElementById('fours').innerText = db.fours;
+            document.getElementById('sixes').innerText = db.sixes;
+            document.getElementById('speedo').innerText = db.speed;
+
+            if (db.inn === 2) {
+                const req = db.target - db.score;
+                const rem = db.maxBalls - db.balls;
+                document.getElementById('hud-rrr-box').classList.remove('opacity-30');
+                document.getElementById('hud-rrr').innerText = (req / (rem/6 || 1)).toFixed(2);
+                document.getElementById('match-desc').innerText = `LAKSHYA: ${req} OFF ${rem} BALLS`;
+                db.winProb = Math.max(2, Math.min(98, 100 - (req * 2) + (rem * 0.5)));
+            } else {
+                document.getElementById('match-desc').innerText = `${db.batTeam} BATTING`;
+            }
+
+            document.getElementById('prob-val').innerText = `${Math.round(db.winProb)}%`;
+            document.getElementById('prob-bar-a').style.width = `${db.winProb}%`;
+            document.getElementById('prob-bar-b').style.width = `${100 - db.winProb}%`;
+
+            const s = db.batsmen[db.strikerIdx];
+            const ns = db.batsmen[db.nonStrikerIdx];
+            document.getElementById('batting-unit').innerHTML = `
+                <div class="p-3 bg-white/5 rounded-xl border-l-2 border-yellow-500">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-white">${s?.name || '---'}*</span>
+                        <span class="orbitron font-black text-yellow-500">${s?.runs || 0}<span class="text-[9px] text-white/40 ml-1">(${s?.balls || 0})</span></span>
+                    </div>
+                </div>
+                <div class="p-3 bg-white/2 rounded-xl opacity-40">
+                    <div class="flex justify-between items-center text-xs">
+                        <span>${ns?.name || '---'}</span>
+                        <span class="orbitron font-bold">${ns?.runs || 0}</span>
+                    </div>
+                </div>
+            `;
+
+            const bw = db.bowlers[db.bowlerIdx];
+            document.getElementById('bowling-unit').innerHTML = `
+                <div class="p-3 bg-cyan-500/5 rounded-xl border-r-2 border-cyan-500">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-white">${bw?.name || '---'}</span>
+                        <span class="orbitron font-black text-cyan-500">${bw?.wickets || 0}/${bw?.runsConceded || 0}</span>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('over-balls').innerHTML = db.thisOver.map(b => {
+                let cls = 'ball-dot scale-75';
+                if(b === 4) cls += ' ball-4';
+                if(b === 6) cls += ' ball-6';
+                if(b === 'W') cls += ' ball-w';
+                return `<div class="${cls}">${b}</div>`;
+            }).join('');
+        }
+
+        async function handleInningsEnd() {
+            db.running = false;
+            const snap = { score: db.score, wickets: db.wickets, bat: [...db.batsmen], bowl: [...db.bowlers] };
+
+            if (db.inn === 1) {
+                db.summaryData.inn1 = snap;
+                db.target = db.score + 1;
+                db.inn = 2;
+                db.winProb = 45;
+                let t = db.batTeam; db.batTeam = db.bowlTeam; db.bowlTeam = t;
+                flashEffect('TARGET: ' + db.target);
+                await sleep(3000);
+                initInnings();
+                db.running = true;
+                matchLoop();
+            } else {
+                db.summaryData.inn2 = snap;
+                showFinalSummary();
+            }
+        }
+
+        function showFinalSummary() {
+            const won = db.score >= db.target ? db.batTeam : db.bowlTeam;
+            const margin = db.score >= db.target ? `${10 - db.wickets} Wkts` : `${db.target - 1 - db.score} Runs`;
+            document.getElementById('summary-overlay').classList.remove('hidden');
+            document.getElementById('final-verdict').innerText = `${won} WON BY ${margin}`;
+
+            const bats = [...db.summaryData.inn1.bat, ...db.summaryData.inn2.bat].filter(b => b.balls > 0).sort((a,b) => b.runs - a.runs).slice(0, 8);
+            document.getElementById('final-bat-list').innerHTML = bats.map(b => `
+                <div class="flex justify-between text-sm p-3 bg-white/5 rounded-xl">
+                    <span class="text-white">${b.name}</span>
+                    <span class="orbitron font-black text-yellow-500">${b.runs} (${b.balls})</span>
+                </div>`).join('');
+            
+            const bowls = [...db.summaryData.inn1.bowl, ...db.summaryData.inn2.bowl].filter(b => b.ballsBowled > 0).sort((a,b) => b.wickets - a.wickets).slice(0, 8);
+            document.getElementById('final-bowl-list').innerHTML = bowls.map(b => `
+                <div class="flex justify-between text-sm p-3 bg-white/5 rounded-xl">
+                    <span class="text-white">${b.name}</span>
+                    <span class="orbitron font-black text-cyan-500">${b.wickets}/${b.runsConceded}</span>
+                </div>`).join('');
+        }
+
+        function addNeuralLog(msg, color = '') {
+            const log = document.getElementById('neural-log');
+            const div = document.createElement('div');
+            div.className = `p-2 rounded-lg bg-white/2 border-l-2 ${color === 'red' ? 'border-red-500' : (color === 'cyan' ? 'border-cyan-500' : 'border-white/10 opacity-60')}`;
+            div.innerHTML = msg;
+            log.prepend(div);
+        }
+
+        function flashEffect(text) {
+            const overlay = document.getElementById('flash-overlay');
+            const flashText = document.getElementById('flash-text');
+            flashText.innerText = text;
+            flashText.className = `text-7xl font-black italic syncopate ${text === 'WICKET' ? 'text-red-500' : 'text-yellow-500'}`;
+            overlay.style.opacity = '1';
+            setTimeout(() => overlay.style.opacity = '0', 800);
+        }
+
+        function drawHitLine(runs) {
+            const container = document.getElementById('wheel-lines');
+            const line = document.createElement('div');
+            line.className = 'hit-line';
+            line.style.transform = `rotate(${Math.random() * 360}deg)`;
+            line.style.color = runs === 6 ? 'var(--neon-gold)' : 'var(--neon-cyan)';
+            line.style.backgroundColor = 'currentColor';
+            line.style.animation = 'stroke-anim 1s forwards';
+            container.appendChild(line);
+            setTimeout(() => line.remove(), 1000);
+        }
+
+        const sleep = ms => new Promise(res => setTimeout(res, ms));
+        setInterval(() => {
+            const d = new Date();
+            document.getElementById('clock').innerText = d.getHours().toString().padStart(2, '0') + ":" + 
+                                                      d.getMinutes().toString().padStart(2, '0') + ":" + 
+                                                      d.getSeconds().toString().padStart(2, '0');
+        }, 1000);
+    </script>
+</body>
+</html>
